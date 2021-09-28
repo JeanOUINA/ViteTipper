@@ -1,6 +1,25 @@
 [
     {
         "constant": true,
+        "inputs": [
+            {
+                "name": "user_id",
+                "type": "uint256"
+            }
+        ],
+        "name": "getTipcount",
+        "outputs": [
+            {
+                "name": "tipcount",
+                "type": "uint256"
+            }
+        ],
+        "payable": false,
+        "stateMutability": "view",
+        "type": "offchain"
+    },
+    {
+        "constant": true,
         "inputs": [],
         "name": "getTotalTipped",
         "outputs": [
