@@ -31,6 +31,12 @@ contract Custody {
         return (acc.tokens, tokenBalances);
     }
 
+    getter getTipcount(uint user_id) returns(uint tipcount) {
+        Account storage acc = accounts[user_id];
+        
+        return acc.tip_count;
+    }
+
     getter getTotalTipped() returns(tokenId[] memory token_ids, uint[] memory tipped) {
         uint[] memory t = new uint[](tokens.length);
         for(uint i = 0; i < tokens.length; i++){
