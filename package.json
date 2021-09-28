@@ -1,0 +1,39 @@
+{
+  "name": "vitetipbot",
+  "version": "1.0.0",
+  "description": "A Vite tipbot for Twitter!",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "npm run build && node .",
+    "watch": "tsc --watch",
+    "build": "tsc",
+    "start": "node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JeanOUINA/ViteTipBot.git"
+  },
+  "keywords": [
+    "vite",
+    "cryptocurrency",
+    "twitter",
+    "bot"
+  ],
+  "author": "JeanOUINA",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/JeanOUINA/ViteTipBot/issues"
+  },
+  "homepage": "https://github.com/JeanOUINA/ViteTipBot#readme",
+  "dependencies": {
+    "bignumber.js": "^9.0.1",
+    "twitter-api-v2": "^1.5.2",
+    "twitter-autohook": "^1.7.2",
+    "twitter-text": "^3.1.0",
+    "vitejs-notthomiz": "^2.3.15",
+    "vitejs-notthomiz-ws": "^2.3.15"
+  },
+  "devDependencies": {
+    "@types/node": "^16.10.1"
+  }
+}

@@ -1,0 +1,154 @@
+pragma soliditypp ^0.4.2;
+
+contract Custody {
+    address BURN_ADDRESS = address(0);
+
+    struct Account {
+        uint tip_count;
+        tokenId[] tokens;
+        address addr;
+    }
+
+    event DepositEvent(uint indexed user_id, uint amount, tokenId token_id, bytes32 hash);
+    event AutomaticWithdrawalAddressChangeEvent(uint indexed user_id, address addr);
+    event WithdrawEvent(uint indexed user_id, uint amount, tokenId token_id);
+    event TipEvent(uint indexed sender_id, uint indexed recipient_id, uint amount, tokenId token_id, bytes32 hash);
+
+    mapping(uint => Account) public accounts;
+    mapping(uint => mapping(tokenId => uint)) public balances;
+    mapping(uint => mapping(tokenId => uint)) public totalTippedByUser;
+    mapping(tokenId => uint) public totalTipped;
+    tokenId[] tokens;
+    
+    address owner;
+
+    getter getBalance(uint user_id) returns(tokenId[] memory token_ids, uint[] memory token_balances) {
+        Account storage acc = accounts[user_id];
+        uint[] memory tokenBalances = new uint[](acc.tokens.length);
+        for(uint i = 0; i < acc.tokens.length; i++){
+            tokenBalances[i] = balances[user_id][acc.tokens[i]];
+        }
+        return (acc.tokens, tokenBalances);
+    }
+
+    getter getTotalTipped() returns(tokenId[] memory token_ids, uint[] memory tipped) {
+        uint[] memory t = new uint[](tokens.length);
+        for(uint i = 0; i < tokens.length; i++){
+            t[i] = totalTipped[tokens[i]];
+        }
+        return (tokens, t);
+    }
+
+    getter getUserTotalTipped(uint user_id) returns(tokenId[] memory token_ids, uint[] memory tipped) {
+        Account storage acc = accounts[user_id];
+        uint[] memory t = new uint[](acc.tokens.length);
+        for(uint i = 0; i < acc.tokens.length; i++){
+            t[i] = totalTippedByUser[user_id][tokens[i]];
+        }
+        return (acc.tokens, t);
+    }
+
+    getter getContractOwner() returns(address owner_address){
+        return owner;
+    }
+
+    getter getCurrentAutoWithdrawalAddress(uint user_id) returns(address withdrawal_address){
+        Account storage acc = accounts[user_id];
+
+        return acc.addr;
+    }
+
+    constructor(address owner_addr) public {
+        owner = owner_addr;
+    }
+
+    function containsToken(tokenId[] memory list, tokenId token) public returns(bool) {
+        for(uint i = 0; i < list.length; i++){
+            if(list[i] == token)return true;
+        }
+
+        return false;
+    }
+
+    onMessage Deposit(uint user_id) payable {
+        require(msg.amount > 0);
+        Account storage account = accounts[user_id];
+        balances[user_id][msg.tokenid] += msg.amount;
+
+        if(!containsToken(account.tokens, msg.tokenid)){
+            account.tokens.push(msg.tokenid);
+        }
+
+        accounts[user_id] = account;
+
+        emit DepositEvent(user_id, msg.amount, msg.tokenid, fromhash());
+    }
+
+    onMessage SetAutomaticWithdrawalAddress(uint user_id, address addr) {
+        require(owner == msg.sender);
+        Account storage account = accounts[user_id];
+        account.addr = addr;
+        accounts[user_id] = account;
+
+        emit AutomaticWithdrawalAddressChangeEvent(user_id, addr);
+    }
+
+    onMessage Withdraw(uint user_id, uint amount, address addr) {
+        require(owner == msg.sender);
+        require(amount > 0);
+        uint bal = balances[user_id][msg.tokenid];
+        require(bal >= amount);
+        balances[user_id][msg.tokenid] = bal-amount;
+
+        addr.transfer(msg.tokenid, amount);
+
+        emit WithdrawEvent(user_id, amount, msg.tokenid);
+    }
+
+    onMessage Tip(uint sender_id, uint amount, uint[] calldata recipients) {
+        // check the owner, amount and recipients
+        require(owner == msg.sender);
+        require(amount > 0);
+        require(recipients.length > 0);
+        
+        // get the total amount. Used to check balance.
+        uint totalAmount = amount*recipients.length;
+
+        // check balance
+        uint bal = balances[sender_id][msg.tokenid];
+        require(bal >= totalAmount);
+
+        Account storage account = accounts[sender_id];
+
+        // update statistics
+        balances[sender_id][msg.tokenid] = bal-totalAmount;
+        totalTippedByUser[sender_id][msg.tokenid] += totalAmount;
+        totalTipped[msg.tokenid] += totalAmount;
+        if(!containsToken(tokens, msg.tokenid)){
+            tokens.push(msg.tokenid);
+        }
+        account.tip_count += recipients.length;
+
+        for(uint i = 0;i<recipients.length;i++){
+            uint recipient = recipients[i];
+
+            Account storage recipientAccount = accounts[recipient];
+            if(!containsToken(recipientAccount.tokens, msg.tokenid)){
+                recipientAccount.tokens.push(msg.tokenid);
+                accounts[recipient] = recipientAccount;
+            }
+
+            if(recipientAccount.addr != BURN_ADDRESS){
+                // directly transfer to withdraw address
+                // if the user asked to.
+                recipientAccount.addr.transfer(msg.tokenid, amount);
+            }else{
+                // change recipient's balance
+                balances[recipient][msg.tokenid] += amount;
+            }
+
+            emit TipEvent(sender_id, recipient, amount, msg.tokenid, fromhash());
+        }
+        accounts[sender_id] = account;
+    }
+}
