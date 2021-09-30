@@ -7,6 +7,7 @@ contract Custody {
         uint tip_count;
         tokenId[] tokens;
         address addr;
+        mapping(tokenId => bool) tokens_map;
     }
 
     event DepositEvent(uint indexed user_id, uint amount, tokenId token_id, bytes32 hash);
@@ -18,7 +19,8 @@ contract Custody {
     mapping(uint => mapping(tokenId => uint)) public balances;
     mapping(uint => mapping(tokenId => uint)) public totalTippedByUser;
     mapping(tokenId => uint) public totalTipped;
-    tokenId[] tokens;
+    tokenId[] public tokens;
+    mapping(tokenId => bool) public tokens_map;
     
     address owner;
 
@@ -59,21 +61,11 @@ contract Custody {
     }
 
     getter getCurrentAutoWithdrawalAddress(uint user_id) returns(address withdrawal_address){
-        Account storage acc = accounts[user_id];
-
-        return acc.addr;
+        return accounts[user_id].addr;
     }
 
     constructor(address owner_addr) public {
         owner = owner_addr;
-    }
-
-    function containsToken(tokenId[] memory list, tokenId token) public returns(bool) {
-        for(uint i = 0; i < list.length; i++){
-            if(list[i] == token)return true;
-        }
-
-        return false;
     }
 
     onMessage Deposit(uint user_id) payable {
@@ -81,11 +73,10 @@ contract Custody {
         Account storage account = accounts[user_id];
         balances[user_id][msg.tokenid] += msg.amount;
 
-        if(!containsToken(account.tokens, msg.tokenid)){
+        if(!accounts[user_id].tokens_map[msg.tokenid]){
             account.tokens.push(msg.tokenid);
+            account.tokens_map[msg.tokenid] = true;
         }
-
-        accounts[user_id] = account;
 
         emit DepositEvent(user_id, msg.amount, msg.tokenid, fromhash());
     }
@@ -94,7 +85,6 @@ contract Custody {
         require(owner == msg.sender);
         Account storage account = accounts[user_id];
         account.addr = addr;
-        accounts[user_id] = account;
 
         emit AutomaticWithdrawalAddressChangeEvent(user_id, addr);
     }
@@ -124,24 +114,24 @@ contract Custody {
         uint bal = balances[sender_id][msg.tokenid];
         require(bal >= totalAmount);
 
-        Account storage account = accounts[sender_id];
-
         // update statistics
         balances[sender_id][msg.tokenid] = bal-totalAmount;
-        totalTippedByUser[sender_id][msg.tokenid] += totalAmount;
+        // bruh, statistics made the quota increase up to 9 quota per tip.
+        /*totalTippedByUser[sender_id][msg.tokenid] += totalAmount;
         totalTipped[msg.tokenid] += totalAmount;
-        if(!containsToken(tokens, msg.tokenid)){
+        if(!tokens_map[msg.tokenid]){
             tokens.push(msg.tokenid);
+            tokens_map[msg.tokenid] = true;
         }
-        account.tip_count += recipients.length;
+        accounts[sender_id].tip_count += recipients.length;*/
 
         for(uint i = 0;i<recipients.length;i++){
             uint recipient = recipients[i];
 
             Account storage recipientAccount = accounts[recipient];
-            if(!containsToken(recipientAccount.tokens, msg.tokenid)){
+            if(!accounts[recipient].tokens_map[msg.tokenid]){
                 recipientAccount.tokens.push(msg.tokenid);
-                accounts[recipient] = recipientAccount;
+                recipientAccount.tokens_map[msg.tokenid] = true;
             }
 
             if(recipientAccount.addr != BURN_ADDRESS){
@@ -155,6 +145,5 @@ contract Custody {
 
             emit TipEvent(sender_id, recipient, amount, msg.tokenid, fromhash());
         }
-        accounts[sender_id] = account;
     }
 }
