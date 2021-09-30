@@ -1,42 +1,5 @@
 [
     {
-        "constant": true,
-        "inputs": [
-            {
-                "name": "user_id",
-                "type": "uint256"
-            }
-        ],
-        "name": "getTipcount",
-        "outputs": [
-            {
-                "name": "tipcount",
-                "type": "uint256"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "offchain"
-    },
-    {
-        "constant": true,
-        "inputs": [],
-        "name": "getTotalTipped",
-        "outputs": [
-            {
-                "name": "token_ids",
-                "type": "tokenId[]"
-            },
-            {
-                "name": "tipped",
-                "type": "uint256[]"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "offchain"
-    },
-    {
         "constant": false,
         "inputs": [
             {
@@ -143,29 +106,6 @@
             },
             {
                 "name": "token_balances",
-                "type": "uint256[]"
-            }
-        ],
-        "payable": false,
-        "stateMutability": "view",
-        "type": "offchain"
-    },
-    {
-        "constant": true,
-        "inputs": [
-            {
-                "name": "user_id",
-                "type": "uint256"
-            }
-        ],
-        "name": "getUserTotalTipped",
-        "outputs": [
-            {
-                "name": "token_ids",
-                "type": "tokenId[]"
-            },
-            {
-                "name": "tipped",
                 "type": "uint256[]"
             }
         ],
