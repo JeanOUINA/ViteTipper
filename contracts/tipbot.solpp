@@ -4,7 +4,6 @@ contract Custody {
     address BURN_ADDRESS = address(0);
 
     struct Account {
-        uint tip_count;
         tokenId[] tokens;
         address addr;
         mapping(tokenId => bool) tokens_map;
@@ -17,10 +16,6 @@ contract Custody {
 
     mapping(uint => Account) public accounts;
     mapping(uint => mapping(tokenId => uint)) public balances;
-    mapping(uint => mapping(tokenId => uint)) public totalTippedByUser;
-    mapping(tokenId => uint) public totalTipped;
-    tokenId[] public tokens;
-    mapping(tokenId => bool) public tokens_map;
     
     address owner;
 
@@ -31,29 +26,6 @@ contract Custody {
             tokenBalances[i] = balances[user_id][acc.tokens[i]];
         }
         return (acc.tokens, tokenBalances);
-    }
-
-    getter getTipcount(uint user_id) returns(uint tipcount) {
-        Account storage acc = accounts[user_id];
-        
-        return acc.tip_count;
-    }
-
-    getter getTotalTipped() returns(tokenId[] memory token_ids, uint[] memory tipped) {
-        uint[] memory t = new uint[](tokens.length);
-        for(uint i = 0; i < tokens.length; i++){
-            t[i] = totalTipped[tokens[i]];
-        }
-        return (tokens, t);
-    }
-
-    getter getUserTotalTipped(uint user_id) returns(tokenId[] memory token_ids, uint[] memory tipped) {
-        Account storage acc = accounts[user_id];
-        uint[] memory t = new uint[](acc.tokens.length);
-        for(uint i = 0; i < acc.tokens.length; i++){
-            t[i] = totalTippedByUser[user_id][tokens[i]];
-        }
-        return (acc.tokens, t);
     }
 
     getter getContractOwner() returns(address owner_address){
@@ -116,14 +88,6 @@ contract Custody {
 
         // update statistics
         balances[sender_id][msg.tokenid] = bal-totalAmount;
-        // bruh, statistics made the quota increase up to 9 quota per tip.
-        /*totalTippedByUser[sender_id][msg.tokenid] += totalAmount;
-        totalTipped[msg.tokenid] += totalAmount;
-        if(!tokens_map[msg.tokenid]){
-            tokens.push(msg.tokenid);
-            tokens_map[msg.tokenid] = true;
-        }
-        accounts[sender_id].tip_count += recipients.length;*/
 
         for(uint i = 0;i<recipients.length;i++){
             uint recipient = recipients[i];
