@@ -1,8 +1,6 @@
-import { createDM, DMMessage, replyTweet, twitc } from "..";
+import { DMMessage, twitc } from "..";
 import Command from "../command";
-import twitterqueue from "../twitterqueue";
 import * as qrcode from "qrcode"
-import { TweetV1 } from "twitter-api-v2";
 import { getDepositURI } from "../vite";
 import { tokenIds, tokenNameToDisplayName, tokenTickers } from "../vite_tokens";
 

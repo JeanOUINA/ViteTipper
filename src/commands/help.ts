@@ -1,5 +1,5 @@
-import { TweetV1 } from "twitter-api-v2";
-import { commands, createDM, DMMessage, rawCommands, replyTweet } from "..";
+import { TweetV2 } from "twitter-api-v2";
+import { commands, DMMessage, rawCommands, twitc } from "..";
 import Command from "../command";
 
 export default new class HelpCommand implements Command {
@@ -17,9 +17,9 @@ Example:
     alias = ["help"]
     usage = ""
 
-    async executePublic(data:TweetV1, args: string[]){
-        await this.sendHelp(data.user.id_str, args[0])
-        await replyTweet(data.id_str, "I've sent the help menu in your DM!")
+    async executePublic(data:TweetV2, args: string[]){
+        await this.sendHelp(data.author_id, args[0])
+        await twitc.v1.reply("I've sent the help menu in your DM!", data.id)
     }
 
     async executePrivate(message:DMMessage, args: string[]){
@@ -30,22 +30,28 @@ Example:
         if(command){
             const cmd = commands.get(command)
             if(cmd){
-                await createDM(user_id, `[Command Details]
-        
+                await twitc.v1.sendDm({
+                    recipient_id: user_id, 
+                    text: `[Command Details]
+
 Usage:
 .${command} ${cmd.usage}
 
 ${cmd.extended_description}${
     cmd.alias[0] !== command ? `\n\nAlias of the ${cmd.alias[0]} command` : ""
-}`)
+}`
+                })
                 return
             }
         }
-        await createDM(user_id, `[Command Overview]
+        await twitc.v1.sendDm({
+            recipient_id: user_id, 
+            text: `[Command Overview]
 Use .help {command} to know more about a certain command.
         
 ${rawCommands.map(cmd => {
     return `.${cmd.alias[0]} ${cmd.usage}`
-}).join("\n")}`)
+}).join("\n")}`
+        })
     }
 }

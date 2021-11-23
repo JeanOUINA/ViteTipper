@@ -1,7 +1,6 @@
-import { createDM, DMMessage } from "..";
+import { DMMessage, twitc } from "..";
 import { convert, tokenIds, tokenNameToDisplayName, tokenTickers } from "../vite_tokens";
 import Command from "../command";
-import twitterqueue from "../twitterqueue";
 import { getBalances } from "../vite";
 
 export default new class BalanceCommand implements Command {
@@ -21,13 +20,16 @@ export default new class BalanceCommand implements Command {
 
         if(!balances[tokenIds.VITE])balances[tokenIds.VITE] = "0"
 
-        await createDM(user_id, `Your current balance:
+        await twitc.v1.sendDm({
+            recipient_id: user_id, 
+            text: `Your current balance:
         
 ${Object.keys(balances).map(tokenId => {
     const displayToken = tokenTickers[tokenId] || tokenId
     const displayBalance = convert(balances[tokenId], "RAW", displayToken as any)
 
     return `${tokenNameToDisplayName(displayToken)}: ${displayBalance} ${tokenTickers[tokenId] || ""}`
-}).join("\n")}`)
+}).join("\n")}`
+        })
     }
 }

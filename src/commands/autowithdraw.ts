@@ -1,7 +1,7 @@
-import { createDM, DMMessage } from "..";
+import { DMMessage, twitc } from "..";
 import Command from "../command";
 import { BURN_ADDRESS, getCurrentAutoWithdrawalAddress, setAutomaticWithdrawalAddress } from "../vite";
-import * as vite from "vitejs-notthomiz"
+import * as vite from "@vite/vitejs"
 
 export default new class BalanceCommand implements Command {
     public = false
@@ -26,9 +26,10 @@ Reset your withdrawal address:
             if(!address){
                 address = "None"
             }
-            await createDM(message.user.id, `Your configured withdrawal address is ${
-                address
-            }.`)
+            await twitc.v1.sendDm({
+                recipient_id: message.user.id, 
+                text: `Your configured withdrawal address is ${address}.`
+            })
         }else{
             // set address
             let address = args[0]
@@ -36,7 +37,10 @@ Reset your withdrawal address:
                 address = BURN_ADDRESS
             }
             if(!vite.wallet.isValidAddress(address)){
-                await createDM(message.user.id, `${address} is not a valid vite address.`)
+                await twitc.v1.sendDm({
+                    recipient_id: message.user.id, 
+                    text: `${address} is not a valid vite address.`
+                })
                 return
             }
 

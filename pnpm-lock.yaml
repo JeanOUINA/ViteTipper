@@ -2,24 +2,24 @@ lockfileVersion: 5.3
 
 specifiers:
   '@types/node': ^16.10.1
+  '@vite/vitejs': ^2.3.16
+  '@vite/vitejs-ws': ^2.3.16
   bignumber.js: ^9.0.1
   dotenv: ^10.0.0
   qrcode: ^1.4.4
   twitter-api-v2: ^1.5.2
   twitter-autohook: ^1.7.2
   twitter-text: ^3.1.0
-  vitejs-notthomiz: ^2.3.15
-  vitejs-notthomiz-ws: ^2.3.15
 
 dependencies:
+  '@vite/vitejs': 2.3.16
+  '@vite/vitejs-ws': 2.3.16
   bignumber.js: 9.0.1
   dotenv: 10.0.0
   qrcode: 1.4.4
   twitter-api-v2: 1.5.2
   twitter-autohook: 1.7.2
   twitter-text: 3.1.0
-  vitejs-notthomiz: 2.3.15
-  vitejs-notthomiz-ws: 2.3.15
 
 devDependencies:
   '@types/node': 16.10.1
@@ -57,7 +57,6 @@ packages:
 
   /@types/node/16.10.1:
     resolution: {integrity: sha512-4/Z9DMPKFexZj/Gn3LylFgamNKHm4K3QDi0gz9B26Uk0c8izYf97B5fxfpspMNkWlFupblKM/nV8+NA9Ffvr+w==}
-    dev: true
 
   /@types/node/8.10.66:
     resolution: {integrity: sha512-tktOkFUA4kXx2hhhrB8bIFb5TbwzS4uOhKEmwiD+NoiL0qtP2OQ9mFldbgD4dV1djrlBYP6eBuQZiWjuHUpqFw==}
@@ -67,13 +66,39 @@ packages:
     resolution: {integrity: sha512-GWP9AZW7foLd4YQxyFZDBepl0lPsWLMEXDZUjQ/c1gqVPDPECrRZyEzuhJdnPWioFCq3Tv0qoGpMD6U+ygd4ZA==}
     dependencies:
       '@types/caseless': 0.12.2
-      '@types/node': 11.11.6
+      '@types/node': 16.10.1
       '@types/tough-cookie': 4.0.1
       form-data: 2.5.1
     dev: false
 
   /@types/tough-cookie/4.0.1:
     resolution: {integrity: sha512-Y0K95ThC3esLEYD6ZuqNek29lNX2EM1qxV8y2FTLUB0ff5wWrk7az+mLrnNFUnaXcgKye22+sFBRXOgpPILZNg==}
+    dev: false
+
+  /@vite/vitejs-ws/2.3.16:
+    resolution: {integrity: sha512-nH6DSH9jQj0GzuEbscIpYgp6DAXAf3tRPObl87sJUEq90GDOG+HJXdx6/HX96spiPln3eijExJqN2gUZD38uBw==}
+    dev: false
+
+  /@vite/vitejs/2.3.16:
+    resolution: {integrity: sha512-UjD+skv3So4ohUdSrdAo0RFipodxXgEM/PoDSI2DiO59UPUi9RfJsNOVQJMlUmHMT0KAB01RX4Dv7IJecbgQ9Q==}
+    dependencies:
+      '@sisi/ed25519-blake2b-hd-key': 1.0.2
+      '@sisi/tweetnacl-blake2b': 1.0.0
+      bip39: 3.0.4
+      blake2b: 2.1.3
+      blakejs: 1.1.1
+      bn.js: 5.2.0
+      browserify-aes: 1.2.0
+      buffer: 5.7.1
+      create-hmac: 1.1.7
+      es6-promise: 4.2.8
+      jsonrpc-lite: 2.2.0
+      net: 1.0.2
+      pure-uuid: 1.6.2
+      qs: 6.10.1
+      scryptsy: 2.1.0
+      websocket: 1.0.34
+      xhr2: 0.2.1
     dev: false
 
   /abbrev/1.1.1:
@@ -1147,50 +1172,6 @@ packages:
       assert-plus: 1.0.0
       core-util-is: 1.0.2
       extsprintf: 1.3.0
-    dev: false
-
-  /vitejs-notthomiz-ws/2.3.15:
-    resolution: {integrity: sha512-dE9I3cxDwrqu1TwEi4yrPJ5zCVsv52Yr2YEUc3x9f3NPwjPjbXn/H2KYFnxVjxn2ceL0jWqP+VSu2f+Syhm9fQ==}
-    dependencies:
-      '@sisi/ed25519-blake2b-hd-key': 1.0.2
-      '@sisi/tweetnacl-blake2b': 1.0.0
-      bip39: 3.0.4
-      blake2b: 2.1.3
-      blakejs: 1.1.1
-      bn.js: 5.2.0
-      browserify-aes: 1.2.0
-      buffer: 5.7.1
-      create-hmac: 1.1.7
-      es6-promise: 4.2.8
-      jsonrpc-lite: 2.2.0
-      net: 1.0.2
-      pure-uuid: 1.6.2
-      qs: 6.10.1
-      scryptsy: 2.1.0
-      websocket: 1.0.34
-      xhr2: 0.2.1
-    dev: false
-
-  /vitejs-notthomiz/2.3.15:
-    resolution: {integrity: sha512-Nas7US8vexr1ZX8kMiEg+fULmlvmh3FHRVDDRvnBDBbkqzGGCjh8xh6op05xR9BF+FcAxl2Ekldk5yKGOIring==}
-    dependencies:
-      '@sisi/ed25519-blake2b-hd-key': 1.0.2
-      '@sisi/tweetnacl-blake2b': 1.0.0
-      bip39: 3.0.4
-      blake2b: 2.1.3
-      blakejs: 1.1.1
-      bn.js: 5.2.0
-      browserify-aes: 1.2.0
-      buffer: 5.7.1
-      create-hmac: 1.1.7
-      es6-promise: 4.2.8
-      jsonrpc-lite: 2.2.0
-      net: 1.0.2
-      pure-uuid: 1.6.2
-      qs: 6.10.1
-      scryptsy: 2.1.0
-      websocket: 1.0.34
-      xhr2: 0.2.1
     dev: false
 
   /websocket/1.0.34:

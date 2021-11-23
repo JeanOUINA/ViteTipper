@@ -1,9 +1,7 @@
-import { createDM, DMMessage } from "..";
+import { DMMessage, twitc } from "..";
 import Command from "../command";
-import twitterqueue from "../twitterqueue";
-import * as vite from "vitejs-notthomiz"
+import * as vite from "@vite/vitejs"
 import help from "./help";
-import BigNumber from "bignumber.js"
 import { convert, tokenIds, tokenNameToDisplayName } from "../vite_tokens";
 import { withdraw } from "../vite";
 
@@ -47,13 +45,19 @@ Withdraw 1 ${tokenNameToDisplayName("BAN")} to your wallet
                 isRawTokenId = true
                 currencyOrRecipient = currencyOrRecipient.toLowerCase()
             }else{
-                await createDM(message.user.id, `The token ${currencyOrRecipient} isn't supported. if you think this is an error from the bot, contact @NotThomiz.`)
+                await twitc.v1.sendDm({
+                    recipient_id: message.user.id, 
+                    text: `The token ${currencyOrRecipient} isn't supported. if you think this is an error from the bot, contact @NotThomiz.`
+                })
                 return
             }
         }
         if(!addr)return help.executePrivate(message, [command])
         if(!vite.wallet.isValidAddress(addr)){
-            await createDM(message.user.id, `${addr} is not a valid vite address.`)
+            await twitc.v1.sendDm({
+                recipient_id: message.user.id, 
+                text: `${addr} is not a valid vite address.`
+            })
             return
         }
 
@@ -66,11 +70,14 @@ Withdraw 1 ${tokenNameToDisplayName("BAN")} to your wallet
             addr
         )
         if(result.type === "insufficient_balance"){
-            await createDM(message.user.id, `You don't have enough money to cover this withdraw. You need ${
-                convert(result.amount, "RAW", currencyOrRecipient)
-            } ${currencyOrRecipient} but you only have ${
-                convert(result.balance, "RAW", currencyOrRecipient)
-            } ${currencyOrRecipient} in your balance.`)
+            await twitc.v1.sendDm({
+                recipient_id: message.user.id, 
+                text: `You don't have enough money to cover this withdraw. You need ${
+                    convert(result.amount, "RAW", currencyOrRecipient)
+                } ${currencyOrRecipient} but you only have ${
+                    convert(result.balance, "RAW", currencyOrRecipient)
+                } ${currencyOrRecipient} in your balance.`
+            })
         }
     }
 }

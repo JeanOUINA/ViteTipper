@@ -26,21 +26,10 @@ export const twitc = new Twit({
     accessToken: process.env.TWITTER_ACCESS_TOKEN,
     accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET
 })
+export const twitcBearer = new Twit(process.env.TWITTER_BEARER_TOKEN)
 
 export const commands = new Map<string, Command>()
 export const rawCommands = [] as Command[]
-
-export function replyTweet(reply_to: string, text: string){
-    return twitc.v1.reply(text, reply_to)
-}
-
-// Broken typing on this because this payload won't work with normal Twitter, and needs twitc
-export async function createDM(recipient_id: string, text: string):Promise<any>{
-    return twitc.v1.sendDm({
-        recipient_id: recipient_id,
-        text: text
-    })
-}
 
 export interface TwitterUser {
     id: string,
@@ -94,42 +83,54 @@ events.on("DepositEvent", async data => {
     if(!await isAuthorized(data.user_id))return
     const user = await fetchUser(data.user_id)
 
-    await createDM(user.id, `${
-        convert(data.amount, "RAW", tokenTickers[data.token_id])
-    } ${
-        tokenNameToDisplayName(tokenTickers[data.token_id])
-    } were deposited into your account's balance!
-    
-View transaction on vitescan: https://vitescan.io/tx/${data.hash}`)
+    await twitc.v1.sendDm({
+        recipient_id: user.id, 
+        text: `${
+            convert(data.amount, "RAW", tokenTickers[data.token_id])
+        } ${
+            tokenNameToDisplayName(tokenTickers[data.token_id])
+        } were deposited into your account's balance!
+        
+View transaction on vitescan: https://vitescan.io/tx/${data.hash}`
+    })
 })
 
 events.on("TipEvent", async data => {
     if(!await isAuthorized(data.recipient_id))return
     const sender = await fetchUser(data.sender_id)
 
-    await createDM(data.recipient_id, `You were tipped ${
-        convert(data.amount, "RAW", tokenTickers[data.token_id])
-    } ${
-        tokenNameToDisplayName(tokenTickers[data.token_id])
-    } by @${sender.username}!`)
+    await twitc.v1.sendDm({
+        recipient_id: data.recipient_id, 
+        text: `You were tipped ${
+            convert(data.amount, "RAW", tokenTickers[data.token_id])
+        } ${
+            tokenNameToDisplayName(tokenTickers[data.token_id])
+        } by @${sender.username}!`
+    })
 })
 
 events.on("WithdrawEvent", async data => {
     if(!await isAuthorized(data.user_id))return
 
-    await createDM(data.user_id, `Your withdraw of ${
-        convert(data.amount, "RAW", tokenTickers[data.token_id])
-    } ${
-        tokenNameToDisplayName(tokenTickers[data.token_id])
-    } was processed!`)
+    await twitc.v1.sendDm({
+        recipient_id: data.user_id,
+        text: `Your withdraw of ${
+            convert(data.amount, "RAW", tokenTickers[data.token_id])
+        } ${
+            tokenNameToDisplayName(tokenTickers[data.token_id])
+        } was processed!`
+    })
 })
 
 events.on("AutomaticWithdrawalAddressChangeEvent", async data => {
     if(!await isAuthorized(data.user_id))return
 
-    await createDM(data.user_id, `Your automatic withdraw address was changed!
+    await twitc.v1.sendDm({
+        recipient_id: data.user_id,
+        text: `Your automatic withdraw address was changed!
     
-New Address: ${data.addr === BURN_ADDRESS ? "None" : data.addr}`)
+        New Address: ${data.addr === BURN_ADDRESS ? "None" : data.addr}`
+    })
 })
 
 fs.readdir(join(__dirname, "commands"), {withFileTypes: true})
@@ -148,15 +149,52 @@ fs.readdir(join(__dirname, "commands"), {withFileTypes: true})
 
     await init()
     
-    const account = await twitc.v1.verifyCredentials()
+    const [
+        account,
+        rules
+    ] = await Promise.all([
+        twitc.v1.verifyCredentials(),
+        twitcBearer.v2.streamRules()
+    ])
+    
+    if(rules.data?.length){
+        await twitcBearer.v2.updateStreamRules({
+            delete: {
+                ids: rules.data.map(e => e.id)
+            }
+        })
+    }
+    await twitcBearer.v2.updateStreamRules({
+        add: [
+            {
+                value: mention,
+                tag: "mention"
+            }
+        ]
+    })
+
     // normal tweets
-    const streamFilter = await twitc.v1.filterStream({
-        track: mention.slice(1)
+    const streamFilter = await twitcBearer.v2.searchStream({
+        expansions: [
+            "author_id",
+            "in_reply_to_user_id",
+            "referenced_tweets.id"
+        ]
     })
     streamFilter.autoReconnect = true
-    streamFilter.on(ETwitterStreamEvent.Data, async (tweet) => {
-        if(tweet.retweeted_status)return
-        let tempArgs = tweet.text.toLowerCase().split(/ +/g)
+    streamFilter.autoReconnectRetries = Infinity
+    streamFilter.on(ETwitterStreamEvent.Data, async (data) => {
+        const tweet = data.data
+        if(!tweet){
+            // for some reasons...
+            console.log("INVALID: ", data)
+            return
+        }
+        // retweet
+        if(tweet.referenced_tweets?.find(e => e.type === "retweeted"))return
+        if(tweet.author_id === account.id_str)return
+        console.log(tweet)
+        const tempArgs = tweet.text.toLowerCase().split(/( |\n)+/g)
         const mentionIndexs = []
         // eslint-disable-next-line no-constant-condition
         while(true){
@@ -171,12 +209,11 @@ fs.readdir(join(__dirname, "commands"), {withFileTypes: true})
         // not mentionned.
         if(!mentionIndexs.length)return
         for(const mentionIndex of mentionIndexs){
-            const args = tweet.text.split(/ +/g).slice(mentionIndex+1)
-            const command = args.shift().toLowerCase()
+            const args = tweet.text.split(/( |\n)+/g).slice(mentionIndex+1).filter(e => !!e.trim())
+            const command = args.shift()?.toLowerCase()?.replace(/^\./, "") || ""
             
             const cmd = commands.get(command)
-            if(!cmd)continue
-            if(!cmd.public)continue
+            if(!cmd?.public)continue
             const n = nonce++
     
             try{
@@ -187,9 +224,9 @@ fs.readdir(join(__dirname, "commands"), {withFileTypes: true})
                     err = JSON.stringify(err.error, null, "    ")
                 }
                 console.error(`${command} Twitter ${n}`, err)
-                await replyTweet(
-                    tweet.id_str,
-                    `An unknown error occured. Please report that to devs (cc @NotThomiz): Execution ID ${n}`
+                await twitc.v1.reply(
+                    `An unknown error occured. Please report that to devs (cc @NotThomiz): Execution ID ${n}`,
+                    tweet.id
                 )
             }
         }
@@ -227,7 +264,10 @@ fs.readdir(join(__dirname, "commands"), {withFileTypes: true})
                 setTimeout(() => {
                     prefixHelp.delete(user.id)
                 }, 10*60*1000)
-                createDM(message.user.id, "Hey 👋, The prefix for all my commands is period (.) You can see a list of all commands by sending .help")
+                twitc.v1.sendDm({
+                    recipient_id: message.user.id,
+                    text: "Hey 👋, The prefix for all my commands is period (.) You can see a list of all commands by sending .help"
+                })
                 continue
             }
             const args = message.text.slice(1).trim().split(/ +/g)
@@ -246,7 +286,10 @@ fs.readdir(join(__dirname, "commands"), {withFileTypes: true})
                     err = JSON.stringify(err.error, null, "    ")
                 }
                 console.error(`${command} Twitter ${n}`, err)
-                await createDM(user.id, `An unknown error occured. Please report that to devs (cc @NotThomiz): Execution ID ${n}`)
+                await twitc.v1.sendDm({
+                    recipient_id: user.id, 
+                    text: `An unknown error occured. Please report that to devs (cc @NotThomiz): Execution ID ${n}`
+                })
             }
         }
     })

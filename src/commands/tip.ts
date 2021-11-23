@@ -1,11 +1,10 @@
 import Command from "../command";
 import help from "./help";
 import BigNumber from "bignumber.js"
-import { createDM, DMMessage, mention, replyTweet } from "..";
+import { DMMessage, mention, twitc } from "..";
 import { extractMention } from "../util";
 import { fetchUserByUsername } from "../users";
-import { TweetV1, UserV2 } from "twitter-api-v2";
-import twitterqueue from "../twitterqueue";
+import { TweetV2, UserV2 } from "twitter-api-v2";
 import { convert, tokenIds, tokenNameToDisplayName, tokenTickers } from "../vite_tokens";
 import { tip } from "../vite";
 
@@ -28,12 +27,12 @@ Tip to multiple people one ${tokenNameToDisplayName("VITE")} each
     public = true
     dm = true
 
-    async executePublic(tweet:TweetV1, args: string[], command: string){
-        const tip = await this.sendTip(args, tweet.user.id_str, tweet)
+    async executePublic(tweet:TweetV2, args: string[], command: string){
+        const tip = await this.sendTip(args, tweet.author_id, tweet)
         if(!tip)return
         if(tip.type == "help")return help.executePublic(tweet, [command])
         const text = this.getText(tip)
-        await replyTweet(tweet.id_str, text)
+        await twitc.v1.reply(text, tweet.id)
     }
 
     async executePrivate(message:DMMessage, args:string[], command: string){
@@ -42,7 +41,10 @@ Tip to multiple people one ${tokenNameToDisplayName("VITE")} each
         if(!tip)return
         if(tip.type == "help")return help.executePrivate(message, [command])
         const text = this.getText(tip)
-        await createDM(message.user.id, text)
+        await twitc.v1.sendDm({
+            recipient_id: message.user.id, 
+            text: text
+        })
     }
 
     getText(tip){
@@ -70,9 +72,9 @@ Tip to multiple people one ${tokenNameToDisplayName("VITE")} each
         }
     }
 
-    async sendTip(args:string[], user_id:string, tweet: TweetV1)
+    async sendTip(args:string[], user_id:string, tweet: TweetV2)
     async sendTip(args:string[], user_id:string, message: DMMessage)
-    async sendTip(args:string[], user_id:string, tm: TweetV1|DMMessage){
+    async sendTip(args:string[], user_id:string, tm: TweetV2|DMMessage){
         let [
             // eslint-disable-next-line prefer-const
             amount,

@@ -1,6 +1,6 @@
 import ActionQueue from "./queue";
-import WS_RPC from "vitejs-notthomiz-ws";
-import * as vite from "vitejs-notthomiz";
+import WS_RPC from "@vite/vitejs-ws";
+import * as vite from "@vite/vitejs";
 import * as fs from "fs"
 const abi = require("../contracts/abi.json")
 const offchaincode = Buffer.from(fs.readFileSync(__dirname+"/../contracts/offchain.bin", "utf8"), "hex").toString("base64")
@@ -18,8 +18,7 @@ dotenv.config({
 export const availableNodes = [
     ...new Set([
         process.env.VITE_WS || "",
-        "ws://54.38.34.201:41420",
-        "wss://vitanode.lightcord.org/ws",
+        "wss://node-vite.thomiz.dev/ws",
         "wss://node.vite.net/gvite/ws"
     ])
 ].filter(e => !!e)
@@ -41,6 +40,8 @@ export async function init(){
     })
     console.log("[VITE] Connected to node")
     await registerEvents()
+
+    wsProvider._provider.on("connect", registerEvents)
 }
 
 const signatures = {}
