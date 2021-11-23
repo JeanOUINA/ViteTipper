@@ -129,7 +129,7 @@ events.on("AutomaticWithdrawalAddressChangeEvent", async data => {
         recipient_id: data.user_id,
         text: `Your automatic withdraw address was changed!
     
-        New Address: ${data.addr === BURN_ADDRESS ? "None" : data.addr}`
+New Address: ${data.addr === BURN_ADDRESS ? "None" : data.addr}`
     })
 })
 
