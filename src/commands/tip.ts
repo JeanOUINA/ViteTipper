@@ -64,9 +64,13 @@ Tip to multiple people one ${tokenNameToDisplayName("VITE")} each
             }
             case "tipped": {
                 if(tip.recipients.length > 1){
-                    return `You have sent ${tip.amount} ${tokenNameToDisplayName(tip.currency)} to ${tip.recipients.length} people each!`
+                    return `You have sent ${tip.amount} ${tokenNameToDisplayName(tip.currency)} to ${tip.recipients.length} people each!
+                    
+https://vitescan.io/tx/${tip.hash}`
                 }else{
-                    return `You tipped ${tip.amount} ${tokenNameToDisplayName(tip.currency)} to ${tip.recipients[0].username}!`
+                    return `You tipped ${tip.amount} ${tokenNameToDisplayName(tip.currency)} to ${tip.recipients[0].username}!
+                    
+https://vitescan.io/tx/${tip.hash}`
                 }
             }
         }
@@ -150,7 +154,8 @@ Tip to multiple people one ${tokenNameToDisplayName("VITE")} each
                     type: "tipped",
                     amount: convert(result.amount, "RAW", tokenTickers[result.token_id]),
                     currency: tokenTickers[result.token_id],
-                    recipients: recipients
+                    recipients: recipients,
+                    hash: result.hash
                 }
             }
         }

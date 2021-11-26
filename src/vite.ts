@@ -88,34 +88,44 @@ async function registerEvents(){
             })
         })(),
         (async () => {
-            let page = 0
-            const pageSize = 100
-            let tokens = []
-            // eslint-disable-next-line no-constant-condition
-            while(true){
-                const tokensInfo = await wsProvider.request("contract_getTokenInfoList", page, pageSize)
-                page++
-                tokens.push(...tokensInfo.tokenInfoList)
-                if(tokensInfo.tokenInfoList.length != pageSize)break
-            }
-            tokens = tokens.sort((a, b) => a.index-b.index)
-            for(const token of tokens
-                .filter(token => {
-                    if(
-                        tokens.find(e => e.tokenSymbol === token.tokenSymbol)
-                        !== token
-                    )return false
-                    return true
-                })
-            ){
-                if(!tokenNames[token.tokenSymbol]){
-                    tokenNames[token.tokenSymbol] = token.tokenName
+            try{
+                let page = 0
+                const pageSize = 100
+                let tokens = []
+                // eslint-disable-next-line no-constant-condition
+                while(true){
+                    const tokensInfo = await wsProvider.request("contract_getTokenInfoList", page, pageSize)
+                    page++
+                    tokens.push(...tokensInfo.tokenInfoList)
+                    if(tokensInfo.tokenInfoList.length != pageSize)break
                 }
-                if(!tokenIds[token.tokenSymbol]){
-                    tokenIds[token.tokenSymbol] = token.tokenId
-                    tokenDecimals[token.tokenSymbol] = token.decimals
-                    tokenTickers[token.tokenId] = token.tokenSymbol
+                tokens = tokens.sort((a, b) => a.index-b.index)
+                for(const token of tokens){
+                    const symbol = `${token.tokenSymbol}-${"0".repeat(3-token.index.toString().length)+token.index}`
+                    tokenNames[symbol] = token.tokenName
+                    if(!tokenNames[token.tokenSymbol]){
+                        tokenNames[token.tokenSymbol] = token.tokenName
+                    }
+                    if(!tokenIds[token.tokenSymbol]){
+                        tokenIds[token.tokenSymbol] = token.tokenId
+                        tokenDecimals[token.tokenSymbol] = token.decimals
+                        if(!tokenTickers[token.tokenId]){
+                            tokenTickers[token.tokenId] = token.tokenSymbol
+                        }
+                    }else{
+                        if(!tokenTickers[token.tokenId]){
+                            tokenTickers[token.tokenId] = symbol
+                        }
+                    }
+                    if(tokenIds[token.tokenSymbol] === token.tokenId){
+                        tokenNames[symbol] = token.tokenName
+                    }
+                    tokenDecimals[symbol] = token.decimals
+                    tokenIds[symbol] = token.tokenId
                 }
+            }catch(err){
+                // can't do anything better than report in console.
+                console.error(err)
             }
         })()
     ])
@@ -189,7 +199,8 @@ export async function tip(sender_id: string, token_id: string, amount: string, r
     sender_id: string,
     token_id: string,
     amount: string,
-    recipients: string[]
+    recipients: string[],
+    hash: string
 }|{
     type: "insufficient_balance",
     balance: string,
@@ -227,7 +238,8 @@ export async function tip(sender_id: string, token_id: string, amount: string, r
                 amount: amount,
                 sender_id: sender_id,
                 recipients: recipients,
-                token_id: token_id
+                token_id: token_id,
+                hash: accountBlock.hash
             }
         })
     })

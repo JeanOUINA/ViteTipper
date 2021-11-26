@@ -42,7 +42,7 @@ Get a deposit link for depositing ${tokenNameToDisplayName("VITC")}
         })
         await twitc.v1.sendDm({
             recipient_id: user_id,
-            text: `You can deposit ${tokenNameToDisplayName("VITE")} by using this link: ${data}`,
+            text: `You can deposit ${tokenNameToDisplayName(tokenTickers[tokenId])} by using this link: ${data}`,
             attachment: {
                 type: "media",
                 media: {
